@@ -40,20 +40,23 @@ Build an AI-powered triage system that automatically classifies inbound messages
 
 ```
 northwind-triage/
-├── backend/                          # Laravel
+├── # Laravel 11 — project root (includes React + Vite)
 │   ├── app/
 │   │   ├── Http/Controllers/
 │   │   │   └── TriageController.php
 │   │   └── Services/
 │   │       └── TriageAgentService.php
+│   ├── resources/
+│   │   ├── js/                       # React source files
+│   │   │   ├── app.jsx
+│   │   │   └── components/
+│   │   └── views/
+│   │       └── app.blade.php         # SPA shell
 │   ├── routes/
-│   │   └── api.php
+│   │   ├── api.php
+│   │   └── web.php                   # catch-all → app.blade.php
+│   ├── vite.config.js
 │   └── .env
-├── frontend/                         # React
-│   ├── src/
-│   │   ├── App.jsx
-│   │   └── components/
-│   └── package.json
 ├── data/
 │   ├── messages.json                 # 20 inbound messages
 │   └── benchmark.json                # Gold-standard triage decisions
@@ -328,10 +331,10 @@ The following require site assessment — do not quote specific figures in first
 
 | Item | Detail |
 |---|---|
-| Framework | React 18 + Vite |
+| Framework | React 18 + Vite (Laravel-integrated) |
 | Styling | Tailwind CSS |
 | HTTP client | fetch API |
-| Backend communication | `POST http://localhost:8000/api/triage` |
+| Backend communication | `fetch('/api/triage')` — relative path, same origin |
 
 ---
 
@@ -339,10 +342,10 @@ The following require site assessment — do not quote specific figures in first
 
 | Item | Requirement |
 |---|---|
-| Local startup | Must run with a single command (`php artisan serve`) |
+| Local startup | Must run with a single command (`php artisan serve --port=8000`) — React is served by Laravel |
 | Environment variables | Managed via `.env`. Not committed to repo. `.env.example` provided |
 | Error handling | API failures and JSON parse errors handled gracefully with clear error messages |
-| CORS | Allow requests from frontend dev server (localhost:5173) |
+| Same origin | Frontend and API share the same origin — no CORS configuration needed |
 | Response time | Typically 5–10 seconds per request (includes LLM call) |
 | Deployment | Not required — local execution only |
 

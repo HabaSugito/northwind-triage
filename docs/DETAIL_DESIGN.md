@@ -11,7 +11,7 @@
 ### 1.1 File Location
 
 ```
-backend/app/Services/TriageAgentService.php
+app/Services/TriageAgentService.php
 ```
 
 ### 1.2 Responsibilities
@@ -194,7 +194,7 @@ Add to `config/services.php`:
 ### 2.1 File Location
 
 ```
-backend/app/Http/Controllers/TriageController.php
+app/Http/Controllers/TriageController.php
 ```
 
 ### 2.2 Responsibilities
@@ -283,7 +283,7 @@ $this->renderable(function (ValidationException $e) {
 ### 3.1 File Location
 
 ```
-backend/routes/api.php
+routes/api.php
 ```
 
 ### 3.2 Full Route Definition
@@ -300,26 +300,68 @@ Route::get('/health',  [TriageController::class, 'health']);
 
 ---
 
-## 4. Backend — CORS Configuration
+## 4. Vite Configuration (Laravel-integrated)
 
-### 4.1 File Location
+React lives inside Laravel. No separate frontend directory or CORS configuration is needed — frontend and API share the same origin (`localhost:8000`).
 
+### 4.1 vite.config.js
+
+```js
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [
+    laravel({
+      input: ['resources/js/app.jsx'],
+      refresh: true,
+    }),
+    react(),
+  ],
+});
 ```
-backend/config/cors.php
+
+### 4.2 resources/views/app.blade.php
+
+SPA shell — loaded by the web catch-all route.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Northwind Triage</title>
+  @vite(['resources/js/app.jsx'])
+</head>
+<body>
+  <div id="app"></div>
+</body>
+</html>
 ```
 
-### 4.2 Required Settings
+### 4.3 routes/web.php
+
+Catch-all route returns the SPA shell for all non-API requests.
 
 ```php
-return [
-    'paths'               => ['api/*'],
-    'allowed_origins'     => ['http://localhost:5173'],
-    'allowed_methods'     => ['GET', 'POST', 'OPTIONS'],
-    'allowed_headers'     => ['Content-Type', 'Accept'],
-    'exposed_headers'     => [],
-    'max_age'             => 0,
-    'supports_credentials' => false,
-];
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+Route::get('/{any}', function () {
+    return view('app');
+})->where('any', '.*');
+```
+
+### 4.4 resources/js/app.jsx (React entry point)
+
+```jsx
+import { createRoot } from 'react-dom/client';
+import App from './components/App';
+
+createRoot(document.getElementById('app')).render(<App />);
 ```
 
 ---
@@ -359,27 +401,26 @@ scripts/batch_run.php
  * Northwind Triage — Batch Runner and Scorer
  *
  * Usage:
- *   cd backend
- *   php ../scripts/batch_run.php
+ *    *   php scripts/batch_run.php
  *
  * Output:
  *   - Summary table printed to stdout
  *   - Full results written to ../data/batch_results.json
  */
 
-require __DIR__ . '/../backend/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 use App\Services\TriageAgentService;
 
 // Bootstrap Laravel outside of HTTP context
-$app = require __DIR__ . '/../backend/bootstrap/app.php';
+$app = require __DIR__ . '/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 // ── Load data ──────────────────────────────────────────────────────────────
 
-$messagesPath  = __DIR__ . '/../data/messages.json';
-$benchmarkPath = __DIR__ . '/../data/benchmark.json';
-$outputPath    = __DIR__ . '/../data/batch_results.json';
+$messagesPath  = __DIR__ . '/data/messages.json';
+$benchmarkPath = __DIR__ . '/data/benchmark.json';
+$outputPath    = __DIR__ . '/data/batch_results.json';
 
 $messages  = json_decode(file_get_contents($messagesPath),  true)['messages'];
 $benchmark = json_decode(file_get_contents($benchmarkPath), true)['decisions'];
@@ -538,22 +579,23 @@ function printSummary(array $summary): void
 
 ### 7.1 File Locations
 
+React source files live inside the Laravel project at `resources/js/`.
+
 ```
-frontend/src/App.jsx
-frontend/src/components/MessageForm.jsx
-frontend/src/components/TriageResult.jsx
-frontend/src/components/CategoryBadge.jsx
-frontend/src/components/PriorityBadge.jsx
+resources/js/app.jsx                    ← React entry point
+resources/js/components/App.jsx
+resources/js/components/MessageForm.jsx
+resources/js/components/TriageResult.jsx
+resources/js/components/CategoryBadge.jsx
+resources/js/components/PriorityBadge.jsx
 ```
 
 ### 7.2 App.jsx
 
 ```jsx
 import { useState } from 'react';
-import MessageForm  from './components/MessageForm';
-import TriageResult from './components/TriageResult';
-
-const API_URL = 'http://localhost:8000/api/triage';
+import MessageForm  from './MessageForm';
+import TriageResult from './TriageResult';
 
 export default function App() {
   const [loading, setLoading] = useState(false);
@@ -566,7 +608,7 @@ export default function App() {
     setError(null);
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch('/api/triage', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(formData),
@@ -800,8 +842,8 @@ export default function PriorityBadge({ priority }) {
   "scripts": {
     "dev":    "vite",
     "build":  "vite build",
-    "lint":   "eslint src/",
-    "format": "prettier --write src/"
+    "lint":   "eslint resources/js/",
+    "format": "prettier --write resources/js/"
   }
 }
 ```
@@ -821,7 +863,7 @@ export default function PriorityBadge({ priority }) {
 
 ## 9. Static Analysis Configuration
 
-### 9.1 backend/.php-cs-fixer.php
+### 9.1 .php-cs-fixer.php
 
 ```php
 <?php
@@ -838,7 +880,7 @@ return (new PhpCsFixer\Config())
     ->setFinder($finder);
 ```
 
-### 9.2 backend/phpstan.neon
+### 9.2 phpstan.neon
 
 ```yaml
 parameters:
@@ -942,39 +984,34 @@ After-hours HVAC fault: `BOOKING` → `Dispatch`, priority `P2`, draft reply mus
 
 ## 13. Local Development Quick Reference
 
-### Start backend
+### Install and start (single command)
 ```bash
-cd backend
 composer install
+npm install
 cp .env.example .env
 # Set ANTHROPIC_API_KEY in .env
 php artisan key:generate
 php artisan serve --port=8000
+# Visit http://localhost:8000
 ```
 
-### Start frontend
+### Hot module replacement (optional, second terminal)
 ```bash
-cd frontend
-npm install
 npm run dev
-# Runs at http://localhost:5173
 ```
 
 ### Run batch scorer
 ```bash
-cd backend
-php ../scripts/batch_run.php
+php scripts/batch_run.php
 ```
 
 ### Run static analysis
 ```bash
 # PHP
-cd backend
 ./vendor/bin/php-cs-fixer fix --dry-run --diff
 ./vendor/bin/phpstan analyse app --level=5
 
 # JS
-cd frontend
 npm run lint
-npx prettier --check src/
+npx prettier --check resources/js/
 ```

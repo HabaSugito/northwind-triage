@@ -1,36 +1,29 @@
 services:
-  backend:
+  app:
     build:
       context: .
-      dockerfile: docker/backend/Dockerfile
+      dockerfile: docker/app/Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/var/www/backend
+      - .:/var/www/app
     env_file:
-      - ./backend/.env
-    working_dir: /var/www/backend
+      - ./.env
+    working_dir: /var/www/app
     command: php artisan serve --host=0.0.0.0 --port=8000
     networks:
       - northwind
 
-  frontend:
-    build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
+  vite:
+    image: node:18-alpine
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:8000
+      - .:/app
     working_dir: /app
-    command: npm run dev -- --host 0.0.0.0
+    command: npm run dev
     networks:
       - northwind
-    depends_on:
-      - backend
 
 networks:
   northwind:
