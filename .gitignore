@@ -1,5 +1,6 @@
 *.log
 .DS_Store
+/data/batch_results.json
 .env
 .env.backup
 .env.production
