@@ -67,8 +67,8 @@ northwind-triage/
 │   ├── .prettierrc
 │   └── phpstan.neon
 ├── data/
-│   ├── messages.json                     # 20 inbound messages (read-only)
-│   ├── benchmark.json                    # gold-standard answers (read-only)
+│   ├── 05_Inbound_Messages.json          # 20 inbound messages (read-only)
+│   ├── 06_Benchmark.json                 # gold-standard answers (read-only)
 │   └── batch_results.json                # written by batch_run.php
 └── scripts/
     └── batch_run.php                     # batch runner and scorer
@@ -127,7 +127,7 @@ northwind-triage/
 - Priority colour mapping: P1=red, P2=amber, P3=green
 
 ### Data files
-- `data/messages.json` and `data/benchmark.json` are **read-only**. Never modify them.
+- `data/05_Inbound_Messages.json` and `data/06_Benchmark.json` are **read-only**. Never modify them.
 - The batch runner reads both files and writes results to `data/batch_results.json`.
 - Add `usleep(500000)` between API calls in the batch runner to avoid rate limiting.
 
@@ -202,10 +202,10 @@ Follow this order. Do not skip ahead.
     - ANTHROPIC_MAX_TOKENS=1024
 
 11. scripts/batch_run.php
-    - Load data/messages.json
+    - Load data/05_Inbound_Messages.json
     - Call TriageAgentService for each message
     - scoreMessage() and scoreRoute() functions
-    - Score against data/benchmark.json
+    - Score against data/06_Benchmark.json
     - Print summary + write data/batch_results.json
 
 12. resources/js/components/CategoryBadge.jsx
@@ -419,7 +419,7 @@ npx prettier --check resources/js/
 - Do not create a separate `frontend/` directory — React lives in `resources/js/`
 - Do not configure CORS — same origin, not needed
 - Do not use `http://localhost:8000/api/triage` in React — use relative path `/api/triage`
-- Do not modify `data/messages.json` or `data/benchmark.json`
+- Do not modify `data/05_Inbound_Messages.json` or `data/06_Benchmark.json`
 - Do not hardcode `ANTHROPIC_API_KEY`
 - Do not commit `.env`
 - Do not hand-tune the system prompt to pass specific benchmark cases — adjust the rules, not the answers
