@@ -310,6 +310,12 @@ PROMPT;
         $data = json_decode($raw, true);
 
         if (json_last_error() !== JSON_ERROR_NONE || ! is_array($data)) {
+            // Fallback: model sometimes self-corrects mid-stream and emits two JSON objects
+            // separated by markdown text. Extract the last valid top-level object.
+            $data = $this->extractLastJson($raw);
+        }
+
+        if (! is_array($data)) {
             throw new RuntimeException('Failed to parse agent response as JSON: ' . $raw);
         }
 
@@ -360,6 +366,40 @@ PROMPT;
         }
 
         return trim($raw);
+    }
+
+    /**
+     * Walk the raw string character by character and return the last complete,
+     * valid top-level JSON object found. Used when the model emits extra text
+     * (e.g. a self-correction note) after or between JSON blocks.
+     */
+    private function extractLastJson(string $raw): ?array
+    {
+        $depth = 0;
+        $start = null;
+        $last  = null;
+        $len   = strlen($raw);
+
+        for ($i = 0; $i < $len; $i++) {
+            if ($raw[$i] === '{') {
+                if ($depth === 0) {
+                    $start = $i;
+                }
+                $depth++;
+            } elseif ($raw[$i] === '}') {
+                $depth--;
+                if ($depth === 0 && $start !== null) {
+                    $candidate = substr($raw, $start, $i - $start + 1);
+                    $decoded   = json_decode($candidate, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $last  = $decoded;
+                    }
+                    $start = null;
+                }
+            }
+        }
+
+        return $last;
     }
 
     /**
