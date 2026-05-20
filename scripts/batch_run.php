@@ -1,7 +1,20 @@
 <?php
 
+/**
+ * Batch triage runner and benchmark scorer.
+ *
+ * Reads all messages from data/05_Inbound_Messages.json, calls TriageAgentService
+ * for each one, scores the output against data/06_Benchmark.json, and writes a
+ * summary + per-message breakdown to data/batch_results.json.
+ *
+ * Run from the project root:
+ *   php scripts/batch_run.php
+ */
+
 declare(strict_types=1);
 
+// Bootstrap Laravel so we can resolve service container bindings (TriageAgentService)
+// without going through the HTTP stack.
 define('LARAVEL_START', microtime(true));
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -20,7 +33,7 @@ $benchmarkData = json_decode(file_get_contents($benchmarkPath), true);
 
 $messages = $messagesData['messages'];
 
-// Key benchmark decisions by message ID
+// Index benchmark decisions by message ID for O(1) lookup in the loop below.
 $benchmark = [];
 foreach ($benchmarkData['decisions'] as $decision) {
     $benchmark[$decision['id']] = $decision;
@@ -90,6 +103,8 @@ foreach ($messages as $i => $message) {
         ];
     }
 
+    // 500ms pause between calls to stay within Anthropic's rate limits.
+    // Skipped after the last message to avoid unnecessary delay.
     if ($i < $total - 1) {
         usleep(500000);
     }
@@ -140,6 +155,12 @@ $output = [
 file_put_contents($resultsPath, json_encode($output, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 echo "\nResults written to data/batch_results.json\n";
 
+/**
+ * Score one agent result against its benchmark entry.
+ * category, priority, and needs_human_review are binary (0 or 1).
+ * route_to is partial — see scoreRoute() for the 0.5 case.
+ * strict_match requires all four fields to be correct.
+ */
 function scoreMessage(array $agent, array $bench): array
 {
     $catScore   = (int) ($agent['category'] === $bench['category']);
@@ -156,14 +177,21 @@ function scoreMessage(array $agent, array $bench): array
     ];
 }
 
+/**
+ * Score the route_to field.
+ * Returns 1.0 for an exact match, 0.5 when the benchmark requires a CC to a second team
+ * but the agent only returned the primary team, and 0.0 otherwise.
+ * An agent that over-routes (adds a CC the benchmark doesn't require) scores 0.0.
+ */
 function scoreRoute(string $agent, string $bench): float
 {
     if ($agent === $bench) {
         return 1.0;
     }
-    // 0.5 when bench requires CC to a second team but agent got the primary right
+
     if (str_contains($bench, ' + ') && explode(' + ', $agent)[0] === explode(' + ', $bench)[0]) {
         return 0.5;
     }
+
     return 0.0;
 }

@@ -1,3 +1,6 @@
+// Colour mapping matches the CLAUDE.md specification (EMERGENCY=red … OUT_OF_SCOPE=grey).
+// Unknown categories fall back to OUT_OF_SCOPE styling so the UI never crashes on
+// an unexpected value from the API.
 const COLOURS = {
   EMERGENCY: 'bg-red-100 text-red-700 border-red-300',
   COMPLAINT: 'bg-orange-100 text-orange-700 border-orange-300',

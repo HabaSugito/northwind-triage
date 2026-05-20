@@ -1,5 +1,14 @@
 import { useState } from 'react';
 
+/**
+ * Controlled form for composing a triage request.
+ * Only `body` is required by the backend; the other fields provide context
+ * that improves routing accuracy (channel affects out-of-hours rules, sender_name
+ * is used in the draft reply greeting).
+ *
+ * @param {function} onSubmit - called with the form fields object when submitted
+ * @param {boolean}  loading  - disables the submit button while a request is in flight
+ */
 export default function MessageForm({ onSubmit, loading }) {
   const [form, setForm] = useState({
     body: '',

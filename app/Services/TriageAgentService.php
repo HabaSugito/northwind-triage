@@ -5,6 +5,11 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
+/**
+ * Classifies, prioritises, routes, and drafts a reply for each inbound customer message
+ * using a single Anthropic API call with the full SOP, catalogue, and tone guide embedded
+ * in the system prompt. No tool use, no retrieval — rules fit comfortably in context.
+ */
 class TriageAgentService
 {
     private const SYSTEM_PROMPT = <<<'PROMPT'
@@ -267,6 +272,14 @@ PROMPT;
         }
     }
 
+    /**
+     * Run the triage agent on a single inbound message.
+     *
+     * @param  array  $message  Validated request fields (body, channel, sender_name, subject, received_at)
+     * @return array            Six-field triage result (category, priority, route_to, needs_human_review, draft_reply, reasoning)
+     *
+     * @throws \RuntimeException  On API failure, non-JSON response, or missing required fields
+     */
     public function triage(array $message): array
     {
         $userMessage = $this->buildUserMessage($message);
@@ -291,6 +304,7 @@ PROMPT;
         }
 
         $raw = $response->json('content.0.text', '');
+        // The model occasionally wraps its JSON in ```json fences despite the prompt instruction.
         $raw = $this->stripMarkdownFences($raw);
 
         $data = json_decode($raw, true);
@@ -302,6 +316,11 @@ PROMPT;
         return $this->validateResult($data);
     }
 
+    /**
+     * Format the inbound message as the user turn sent to the API.
+     * Channel context is appended as a bracketed hint so the agent can apply
+     * out-of-hours and SMS-brevity rules without re-deriving them from the timestamp.
+     */
     private function buildUserMessage(array $message): string
     {
         $channelContext = match ($message['channel'] ?? 'email') {
@@ -327,6 +346,11 @@ PROMPT;
         return implode("\n", $lines);
     }
 
+    /**
+     * Remove ```json or ``` fences if the model added them.
+     * We only strip when the response actually starts with a fence to avoid
+     * corrupting JSON that legitimately contains backtick sequences.
+     */
     private function stripMarkdownFences(string $raw): string
     {
         $raw = trim($raw);
@@ -338,6 +362,12 @@ PROMPT;
         return trim($raw);
     }
 
+    /**
+     * Assert all six fields are present and cast to their expected types.
+     * Explicit casting is necessary because JSON booleans can arrive as integers
+     * (0/1) depending on the model's serialisation, which would break === comparisons
+     * in the batch scorer.
+     */
     private function validateResult(array $data): array
     {
         $required = ['category', 'priority', 'route_to', 'needs_human_review', 'draft_reply', 'reasoning'];

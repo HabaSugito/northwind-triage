@@ -1,9 +1,17 @@
 import CategoryBadge from './CategoryBadge';
 import PriorityBadge from './PriorityBadge';
 
+/**
+ * Displays the structured triage result returned by the API.
+ * The human-review banner is rendered at the top so it's visible without scrolling —
+ * the SOP treats a missed escalation as more costly than a false positive.
+ *
+ * @param {object} result - the six-field triage object from the API
+ */
 export default function TriageResult({ result }) {
   return (
     <div className="bg-white rounded-lg shadow p-6 space-y-4">
+      {/* Prominent red banner — shown before the classification so staff see it first. */}
       {result.needs_human_review && (
         <div className="bg-red-600 text-white rounded px-4 py-3 text-sm font-semibold">
           Requires human review — do not send this reply without checking first.

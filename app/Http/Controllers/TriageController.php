@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
+/**
+ * Exposes the triage agent over HTTP.
+ * ValidationException is caught by Handler.php and converted to HTTP 400
+ * (Laravel's default would be 422, which doesn't match the API contract).
+ */
 class TriageController extends Controller
 {
     public function __construct(
@@ -15,6 +20,10 @@ class TriageController extends Controller
     ) {
     }
 
+    /**
+     * POST /api/triage — classify and respond to a single inbound customer message.
+     * Only `body` is required; all other fields are optional context for the agent.
+     */
     public function triage(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -30,6 +39,7 @@ class TriageController extends Controller
 
             return response()->json($result);
         } catch (Throwable $e) {
+            // Log the message body so support can reproduce the failure without re-running the batch.
             Log::error('Triage agent error', [
                 'message' => $e->getMessage(),
                 'body' => $request->input('body'),
