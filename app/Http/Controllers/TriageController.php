@@ -10,7 +10,7 @@ use Throwable;
 
 /**
  * Exposes the triage agent over HTTP.
- * ValidationException is caught by Handler.php and converted to HTTP 400
+ * ValidationException is caught by bootstrap/app.php and converted to HTTP 400
  * (Laravel's default would be 422, which doesn't match the API contract).
  */
 class TriageController extends Controller

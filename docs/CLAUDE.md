@@ -19,7 +19,7 @@ Read these documents before starting any task. They are the source of truth.
 
 | File | Purpose |
 |---|---|
-| `docs/requirements_en.md` | Full functional and non-functional requirements |
+| `docs/requirements.md` | Full functional and non-functional requirements |
 | `docs/DESIGN.md` | Architecture, class design, API spec, data flows |
 | `docs/DETAIL_DESIGN.md` | Full class definitions, component code, error flows, config files |
 | `docs/system_prompt.md` | The complete system prompt for the triage agent — copy exactly |
@@ -32,14 +32,14 @@ Read these documents before starting any task. They are the source of truth.
 northwind-triage/
 ├── CLAUDE.md                             ← you are here
 ├── docs/
-│   ├── requirements_en.md
+│   ├── requirements.md
 │   ├── DESIGN.md
 │   ├── DETAIL_DESIGN.md
 │   └── system_prompt.md
 ├── # Laravel 11 (includes React + Vite) — project root
+│   ├── bootstrap/
+│   │   └── app.php                       # ValidationException → 400 (Laravel 11 style)
 │   ├── app/
-│   │   ├── Exceptions/
-│   │   │   └── Handler.php               # ValidationException → 400
 │   │   ├── Http/Controllers/
 │   │   │   └── TriageController.php
 │   │   └── Services/
@@ -67,8 +67,8 @@ northwind-triage/
 │   ├── .prettierrc
 │   └── phpstan.neon
 ├── data/
-│   ├── messages.json                     # 20 inbound messages (read-only)
-│   ├── benchmark.json                    # gold-standard answers (read-only)
+│   ├── 05_Inbound_Messages.json          # 20 inbound messages (read-only)
+│   ├── 06_Benchmark.json                 # gold-standard answers (read-only)
 │   └── batch_results.json                # written by batch_run.php
 └── scripts/
     └── batch_run.php                     # batch runner and scorer
@@ -94,7 +94,7 @@ northwind-triage/
 ### Agent
 - The system prompt lives in `TriageAgentService` as a `SYSTEM_PROMPT` constant.
 - Copy the full prompt text from `docs/system_prompt.md` exactly — do not paraphrase or summarise.
-- Model: `claude-sonnet-4-20250514`. Max tokens: 1024.
+- Model: `claude-sonnet-4-6`. Max tokens: 1024.
 - The agent must handle all 20 messages with the same prompt. No per-message logic.
 - Always strip markdown fences from the model response before JSON parsing.
 - API call must include headers: `x-api-key`, `anthropic-version: 2023-06-01`, `content-type: application/json`.
@@ -104,7 +104,7 @@ northwind-triage/
 - Single entry point: `POST /api/triage`
 - Also expose: `GET /api/health`
 - Validate that `body` is required. All other fields are optional.
-- Override Laravel's default 422 validation response → return HTTP 400 via `Handler.php`.
+- Override Laravel's default 422 validation response → return HTTP 400 via `bootstrap/app.php` (`withExceptions()`).
 - Return HTTP 500 for API errors and JSON parse failures.
 - Log all errors with `Log::error()` including the message body as context.
 - Anthropic credentials are loaded via `config/services.php` using `env()` — never hardcode.
@@ -127,7 +127,7 @@ northwind-triage/
 - Priority colour mapping: P1=red, P2=amber, P3=green
 
 ### Data files
-- `data/messages.json` and `data/benchmark.json` are **read-only**. Never modify them.
+- `data/05_Inbound_Messages.json` and `data/06_Benchmark.json` are **read-only**. Never modify them.
 - The batch runner reads both files and writes results to `data/batch_results.json`.
 - Add `usleep(500000)` between API calls in the batch runner to avoid rate limiting.
 
@@ -189,8 +189,8 @@ Follow this order. Do not skip ahead.
    - triage(Request $request): JsonResponse
    - health(): JsonResponse
 
-8. app/Exceptions/Handler.php
-   - ValidationException → HTTP 400
+8. bootstrap/app.php
+   - ValidationException → HTTP 400 (via withExceptions())
 
 9. routes/api.php
    - POST /triage → TriageController@triage
@@ -198,14 +198,14 @@ Follow this order. Do not skip ahead.
 
 10. .env.example
     - ANTHROPIC_API_KEY=
-    - ANTHROPIC_MODEL=claude-sonnet-4-20250514
+    - ANTHROPIC_MODEL=claude-sonnet-4-6
     - ANTHROPIC_MAX_TOKENS=1024
 
 11. scripts/batch_run.php
-    - Load data/messages.json
+    - Load data/05_Inbound_Messages.json
     - Call TriageAgentService for each message
     - scoreMessage() and scoreRoute() functions
-    - Score against data/benchmark.json
+    - Score against data/06_Benchmark.json
     - Print summary + write data/batch_results.json
 
 12. resources/js/components/CategoryBadge.jsx
@@ -409,7 +409,7 @@ npx prettier --check resources/js/
 | Variable | Required | Description |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | ✅ Yes | Anthropic API key (sk-ant-...) |
-| `ANTHROPIC_MODEL` | No | Default: `claude-sonnet-4-20250514` |
+| `ANTHROPIC_MODEL` | No | Default: `claude-sonnet-4-6` |
 | `ANTHROPIC_MAX_TOKENS` | No | Default: `1024` |
 
 ---
@@ -419,7 +419,7 @@ npx prettier --check resources/js/
 - Do not create a separate `frontend/` directory — React lives in `resources/js/`
 - Do not configure CORS — same origin, not needed
 - Do not use `http://localhost:8000/api/triage` in React — use relative path `/api/triage`
-- Do not modify `data/messages.json` or `data/benchmark.json`
+- Do not modify `data/05_Inbound_Messages.json` or `data/06_Benchmark.json`
 - Do not hardcode `ANTHROPIC_API_KEY`
 - Do not commit `.env`
 - Do not hand-tune the system prompt to pass specific benchmark cases — adjust the rules, not the answers
@@ -428,5 +428,5 @@ npx prettier --check resources/js/
 - Do not use exclamation marks or emoji in draft replies
 - Do not add unnecessary dependencies or architectural complexity
 - Do not skip `stripMarkdownFences()` — the model occasionally adds fences despite instructions
-- Do not return 422 for validation errors — override to 400 in `Handler.php`
+- Do not return 422 for validation errors — override to 400 in `bootstrap/app.php`
 - Do not forget `usleep(500000)` between calls in the batch runner
