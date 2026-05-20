@@ -58,7 +58,7 @@ Customer Message
 ### 1.2 Batch Run Flow
 
 ```
-data/messages.json (20 messages)
+data/05_Inbound_Messages.json (20 messages)
       │
       ▼
 [batch_run.php]
@@ -68,7 +68,7 @@ data/messages.json (20 messages)
       │
       ▼
 [Scorer]
-  - Loads data/benchmark.json
+  - Loads data/06_Benchmark.json
   - Compares agent output vs benchmark
   - Calculates strict accuracy + per-field scores
       │
@@ -356,8 +356,8 @@ async function handleSubmit(formData) {
 ### 5.1 Script: scripts/batch_run.php
 
 ```
-Load data/messages.json
-Load data/benchmark.json
+Load data/05_Inbound_Messages.json
+Load data/06_Benchmark.json
 
 For each message:
   1. Call TriageAgentService::triage($message)

@@ -5,6 +5,11 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
+/**
+ * Classifies, prioritises, routes, and drafts a reply for each inbound customer message
+ * using a single Anthropic API call with the full SOP, catalogue, and tone guide embedded
+ * in the system prompt. No tool use, no retrieval — rules fit comfortably in context.
+ */
 class TriageAgentService
 {
     private const SYSTEM_PROMPT = <<<'PROMPT'
@@ -46,7 +51,7 @@ OUT_OF_SCOPE
 
 Classification edge cases:
 - "Heater not working" is NOT listed in the SOP as EMERGENCY — treat as BOOKING P2 (HVAC has no on-call).
-- Appliance repair (dishwasher, washing machine, oven) is OUT_OF_SCOPE. Northwind installs but does not repair appliances.
+- Appliance repair (dishwasher, washing machine, oven) is OUT_OF_SCOPE and needs_human_review = true. Northwind installs but does not repair — customers often expect repair service and the install/repair distinction may need explaining by a human.
 - Spam or garbled messages are OUT_OF_SCOPE with needs_human_review = true. Do not attempt to draft a reply.
 - Non-English messages: translate the content to determine the category, then classify accordingly. Set needs_human_review = true.
 
@@ -60,7 +65,6 @@ P1 — Active safety or property risk. Always P1 for EMERGENCY. Never downgrade.
 P2 — Loss of essential function (heating, hot water, working toilet) with no immediate damage.
      OR any complaint involving a charge over $1,000.
      OR after-hours HVAC fault (no HVAC on-call — next-business-day via Dispatch).
-     OR customer threatens an online review or legal action.
      First response SLA: within 4 business hours.
 
 P3 — Standard enquiry, quote request, or non-urgent booking.
@@ -91,7 +95,7 @@ Special routing rule:
 
 Set needs_human_review = true if ANY of the following apply:
 
-1. The customer is angry, distressed, or threatens legal action or an online review.
+1. The customer is angry, distressed, or expresses clear dissatisfaction (e.g. "I am not happy", "this is unacceptable", "very disappointed") — even without an explicit threat. Or threatens legal action or an online review.
 2. The request involves a quote likely over $5,000, or a refund over $500.
 3. The message is in a language other than English, or appears garbled or spam.
 4. You cannot confidently classify the message.
@@ -213,7 +217,7 @@ FIXED PRICES — you MAY reference these in draft replies:
   Electrical:
     Switchboard upgrade            from $2,200   (council approval may apply)
     Electrical fault diagnosis     from $180/hr  (sparking / burning smell / tripping = P1)
-    EV charger installation        from $1,400   (single-phase only; three-phase quoted on site; min. service age 12 months)
+    EV charger installation        from $1,400   (single-phase only; three-phase quoted on site; min. service age 12 months — flag only if age is unknown or stated to be under 12 months)
 
   HVAC:
     Split-system installation      from $1,600
@@ -222,7 +226,7 @@ FIXED PRICES — you MAY reference these in draft replies:
 
 SERVICES NOT OFFERED — classify as OUT_OF_SCOPE and suggest referral if applicable:
 
-  Roofing / gutter cleaning                           (no referral)
+  Roofing / gutter cleaning                           → refer to Allroof Services
   Solar panel installation or repair                  → refer to SunPath Energy
   Pool plumbing or pool equipment                     → refer to AquaCorp Pools
   Appliance repair (dishwasher, washing machine, oven) (installation only; no repair)
@@ -268,6 +272,14 @@ PROMPT;
         }
     }
 
+    /**
+     * Run the triage agent on a single inbound message.
+     *
+     * @param  array  $message  Validated request fields (body, channel, sender_name, subject, received_at)
+     * @return array            Six-field triage result (category, priority, route_to, needs_human_review, draft_reply, reasoning)
+     *
+     * @throws \RuntimeException  On API failure, non-JSON response, or missing required fields
+     */
     public function triage(array $message): array
     {
         $userMessage = $this->buildUserMessage($message);
@@ -292,17 +304,29 @@ PROMPT;
         }
 
         $raw = $response->json('content.0.text', '');
+        // The model occasionally wraps its JSON in ```json fences despite the prompt instruction.
         $raw = $this->stripMarkdownFences($raw);
 
         $data = json_decode($raw, true);
 
         if (json_last_error() !== JSON_ERROR_NONE || ! is_array($data)) {
+            // Fallback: model sometimes self-corrects mid-stream and emits two JSON objects
+            // separated by markdown text. Extract the last valid top-level object.
+            $data = $this->extractLastJson($raw);
+        }
+
+        if (! is_array($data)) {
             throw new RuntimeException('Failed to parse agent response as JSON: ' . $raw);
         }
 
         return $this->validateResult($data);
     }
 
+    /**
+     * Format the inbound message as the user turn sent to the API.
+     * Channel context is appended as a bracketed hint so the agent can apply
+     * out-of-hours and SMS-brevity rules without re-deriving them from the timestamp.
+     */
     private function buildUserMessage(array $message): string
     {
         $channelContext = match ($message['channel'] ?? 'email') {
@@ -328,6 +352,11 @@ PROMPT;
         return implode("\n", $lines);
     }
 
+    /**
+     * Remove ```json or ``` fences if the model added them.
+     * We only strip when the response actually starts with a fence to avoid
+     * corrupting JSON that legitimately contains backtick sequences.
+     */
     private function stripMarkdownFences(string $raw): string
     {
         $raw = trim($raw);
@@ -339,6 +368,46 @@ PROMPT;
         return trim($raw);
     }
 
+    /**
+     * Walk the raw string character by character and return the last complete,
+     * valid top-level JSON object found. Used when the model emits extra text
+     * (e.g. a self-correction note) after or between JSON blocks.
+     */
+    private function extractLastJson(string $raw): ?array
+    {
+        $depth = 0;
+        $start = null;
+        $last  = null;
+        $len   = strlen($raw);
+
+        for ($i = 0; $i < $len; $i++) {
+            if ($raw[$i] === '{') {
+                if ($depth === 0) {
+                    $start = $i;
+                }
+                $depth++;
+            } elseif ($raw[$i] === '}') {
+                $depth--;
+                if ($depth === 0 && $start !== null) {
+                    $candidate = substr($raw, $start, $i - $start + 1);
+                    $decoded   = json_decode($candidate, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $last  = $decoded;
+                    }
+                    $start = null;
+                }
+            }
+        }
+
+        return $last;
+    }
+
+    /**
+     * Assert all six fields are present and cast to their expected types.
+     * Explicit casting is necessary because JSON booleans can arrive as integers
+     * (0/1) depending on the model's serialisation, which would break === comparisons
+     * in the batch scorer.
+     */
     private function validateResult(array $data): array
     {
         $required = ['category', 'priority', 'route_to', 'needs_human_review', 'draft_reply', 'reasoning'];

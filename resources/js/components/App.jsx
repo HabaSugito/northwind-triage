@@ -2,6 +2,10 @@ import { useState } from 'react';
 import MessageForm from './MessageForm';
 import TriageResult from './TriageResult';
 
+/**
+ * Root component. Owns the three pieces of async state (loading, result, error)
+ * and passes them down to MessageForm and TriageResult.
+ */
 export default function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -9,10 +13,13 @@ export default function App() {
 
   async function handleSubmit(formData) {
     setLoading(true);
+    // Clear previous result and error so stale data doesn't linger while the new request runs.
     setResult(null);
     setError(null);
 
     try {
+      // Relative path works because the React app is served by the same Laravel origin.
+      // No CORS configuration is needed.
       const res = await fetch('/api/triage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -21,6 +28,7 @@ export default function App() {
 
       const data = await res.json();
 
+      // The API returns { error: "..." } for both 400 and 500 responses.
       if (!res.ok) {
         throw new Error(data.error || `HTTP ${res.status}`);
       }
@@ -36,7 +44,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Northwind — Triage Agent</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Northwind — Triage Agent
+        </h1>
         <MessageForm onSubmit={handleSubmit} loading={loading} />
         {error && (
           <div className="rounded bg-red-50 border border-red-300 text-red-700 px-4 py-3 text-sm">

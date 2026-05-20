@@ -118,7 +118,7 @@ For each inbound message, the agent must output the following six fields:
 **Priority notes:**
 
 - EMERGENCY messages are always P1, even if the customer's tone is calm — do not downgrade
-- Customer threatening an online review or legal action → consider escalating to P2
+- Customer threatening an online review or legal action → `needs_human_review = true` (flag only; not a P2 trigger per SOP)
 - After-hours HVAC fault → P2, next-business-day allocation via Dispatch (no HVAC on-call)
 
 > **Note: The candidate brief lists P2 as "within 48h" and P3 as "within 5 business days" — these conflict with the SOP. The SOP takes precedence.**
@@ -142,7 +142,7 @@ For each inbound message, the agent must output the following six fields:
 
 Set `needs_human_review = true` if any of the following apply:
 
-- Customer is angry, distressed, or threatens legal action / online review
+- Customer is angry, distressed, or expresses clear dissatisfaction (e.g. "I am not happy", "very disappointed") — even without explicit threats. Or threatens legal action / online review.
 - Request involves a quote over $5,000, or a refund over $500
 - Message is in a language other than English, or appears garbled / spam
 - Cannot confidently classify the message
@@ -199,7 +199,7 @@ The following require site assessment — do not quote specific figures in first
 
 | Service | Referral |
 |---|---|
-| Roofing / gutter cleaning | — |
+| Roofing / gutter cleaning | Allroof Services |
 | Solar panel installation or repair | SunPath Energy |
 | Pool plumbing or pool equipment | AquaCorp Pools |
 | Appliance repair (dishwasher, washing machine, oven) | — (installation only, no repair) |

@@ -1,5 +1,14 @@
 import { useState } from 'react';
 
+/**
+ * Controlled form for composing a triage request.
+ * Only `body` is required by the backend; the other fields provide context
+ * that improves routing accuracy (channel affects out-of-hours rules, sender_name
+ * is used in the draft reply greeting).
+ *
+ * @param {function} onSubmit - called with the form fields object when submitted
+ * @param {boolean}  loading  - disables the submit button while a request is in flight
+ */
 export default function MessageForm({ onSubmit, loading }) {
   const [form, setForm] = useState({
     body: '',
@@ -19,9 +28,14 @@ export default function MessageForm({ onSubmit, loading }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white rounded-lg shadow p-6 space-y-4"
+    >
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Channel</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Channel
+        </label>
         <select
           name="channel"
           value={form.channel}

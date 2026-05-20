@@ -1,3 +1,6 @@
+// Colour mapping matches the CLAUDE.md specification (EMERGENCY=red … OUT_OF_SCOPE=grey).
+// Unknown categories fall back to OUT_OF_SCOPE styling so the UI never crashes on
+// an unexpected value from the API.
 const COLOURS = {
   EMERGENCY: 'bg-red-100 text-red-700 border-red-300',
   COMPLAINT: 'bg-orange-100 text-orange-700 border-orange-300',
@@ -10,7 +13,9 @@ const COLOURS = {
 export default function CategoryBadge({ category }) {
   const colour = COLOURS[category] ?? COLOURS.OUT_OF_SCOPE;
   return (
-    <span className={`border rounded px-2 py-0.5 text-xs font-semibold ${colour}`}>
+    <span
+      className={`border rounded px-2 py-0.5 text-xs font-semibold ${colour}`}
+    >
       {category}
     </span>
   );
