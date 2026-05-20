@@ -66,6 +66,8 @@ php scripts/batch_run.php
 
 Reads all 20 messages from `data/05_Inbound_Messages.json`, calls the agent for each, scores against `data/06_Benchmark.json`, and writes results to `data/batch_results.json`.
 
+This batch runner serves as the automated evaluation harness for this project. Traditional unit tests with a mocked Anthropic API cannot verify the thing that matters most — whether the prompt correctly classifies messages and generates appropriate replies. Running against the real model is the only meaningful test.
+
 ---
 
 ## Environment variables
