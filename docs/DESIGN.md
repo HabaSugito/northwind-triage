@@ -2,7 +2,7 @@
 
 **Project:** Northwind Home Services — Automated Customer Enquiry Triage System
 **Date:** May 2025
-**Stack:** Laravel 11 (PHP 8.2) + React 18 + Anthropic Claude API
+**Stack:** Laravel 11 (PHP 8.2) + React 18 + Vite (Laravel-integrated) + Anthropic Claude API
 
 ---
 
@@ -320,7 +320,7 @@ async function handleSubmit(formData) {
   setLoading(true);
   setError(null);
   try {
-    const res = await fetch('http://localhost:8000/api/triage', {
+    const res = await fetch('/api/triage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData),
@@ -445,35 +445,34 @@ Output:
 - npm
 - Anthropic API key
 
-### 7.2 Backend (Laravel)
+### 7.2 Install and Start
+
+React lives inside Laravel at `resources/js/`. A single command starts the full application.
 
 ```bash
-cd backend
 composer install
+npm install
 cp .env.example .env
 # Add ANTHROPIC_API_KEY to .env
 php artisan key:generate
 php artisan serve --port=8000
+# Visit http://localhost:8000
 ```
 
-### 7.3 Frontend (React)
+For hot module replacement during development (optional, second terminal):
 
 ```bash
-cd frontend
-npm install
 npm run dev
-# Runs on http://localhost:5173
 ```
 
-### 7.4 Batch Runner
+### 7.3 Batch Runner
 
 ```bash
-cd backend
-php ../scripts/batch_run.php
+php scripts/batch_run.php
 # Outputs results to ../data/batch_results.json
 ```
 
-### 7.5 Static Analysis and Formatting
+### 7.4 Static Analysis and Formatting
 
 #### Backend (PHP)
 
@@ -483,7 +482,6 @@ php ../scripts/batch_run.php
 | PHPStan | Static analysis (level 5) | `phpstan.neon` |
 
 ```bash
-cd backend
 
 # Install tools
 composer require --dev friendsofphp/php-cs-fixer phpstan/phpstan
@@ -520,13 +518,14 @@ parameters:
 
 #### Frontend (React)
 
+React source files live at `resources/js/`. All JS tooling runs from the project root.
+
 | Tool | Purpose | Config file |
 |---|---|---|
 | ESLint | Static analysis | `eslint.config.js` (Vite default) |
 | Prettier | Code formatting | `.prettierrc` |
 
 ```bash
-cd frontend
 
 # Install Prettier (ESLint is included with Vite)
 npm install --save-dev prettier eslint-config-prettier
@@ -535,10 +534,10 @@ npm install --save-dev prettier eslint-config-prettier
 npm run lint
 
 # Format check (dry run)
-npx prettier --check src/
+npx prettier --check resources/js/
 
 # Apply formatting
-npx prettier --write src/
+npx prettier --write resources/js/
 ```
 
 **.prettierrc:**
@@ -557,8 +556,8 @@ npx prettier --write src/
   "scripts": {
     "dev":    "vite",
     "build":  "vite build",
-    "lint":   "eslint src/",
-    "format": "prettier --write src/"
+    "lint":   "eslint resources/js/",
+    "format": "prettier --write resources/js/"
   }
 }
 ```
@@ -575,15 +574,19 @@ The task fits cleanly in a single well-prompted LLM call. A multi-agent architec
 
 Laravel is explicitly named in the job description and listed as a bonus skill. It also provides clean separation of concerns (Controller / Service), built-in validation, and a familiar MVC structure that makes the codebase easy to clone and run.
 
-### 8.3 Structured JSON Output
+### 8.3 Laravel-integrated Vite over Separate Frontend Directory
+
+The candidate brief requires the system to start with a single command. By using Laravel's built-in Vite integration (`laravel-vite-plugin`), React is served from the same origin as the API (`localhost:8000`), eliminating the need for CORS configuration and reducing startup to a single `php artisan serve` command. A separate `frontend/` directory would require two terminal sessions and CORS setup.
+
+### 8.4 Structured JSON Output
 
 Instructing the model to return only JSON (with a strict schema) avoids the need for any natural language parsing. Markdown fence stripping is included as a safety measure since some models add fences despite instructions.
 
-### 8.4 System Prompt as a Constant
+### 8.5 System Prompt as a Constant
 
 The system prompt is held as a constant in `TriageAgentService` rather than loaded from a file or database. This keeps the agent self-contained, easy to version-control, and simple to run locally without additional configuration.
 
-### 8.5 What I Would Build Next
+### 8.6 What I Would Build Next
 
 The highest-value next step would be an **evaluation harness** — a structured way to run the agent against the benchmark, log results, and compare prompt versions side-by-side. Currently, iterating on the system prompt requires manually re-running the batch script and eyeballing diffs. A lightweight eval framework (even a simple PHP script that outputs a markdown diff table) would make prompt iteration measurably faster and reduce the risk of regressions when refining edge cases.
 
