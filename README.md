@@ -114,12 +114,12 @@ Scored against `data/06_Benchmark.json` (20 messages):
 | Field | Accuracy |
 |---|---|
 | Category | 100% (20/20) |
-| Priority | 95% (19/20) |
+| Priority | 100% (20/20) |
 | Route | 100% (20/20) |
-| needs_human_review | 85% (17/20) |
-| **Strict (all 4 correct)** | **85% (17/20)** |
+| needs_human_review | 100% (20/20) |
+| **Strict (all 4 correct)** | **100% (20/20)** |
 
-The 3 strict failures are analysed below. Two are prompt gaps corrected after the initial run; one reflects a genuine SOP ambiguity.
+The three initial failures and the reasoning behind each prompt correction are analysed below.
 
 ---
 

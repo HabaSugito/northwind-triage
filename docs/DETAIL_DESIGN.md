@@ -418,8 +418,8 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 // ── Load data ──────────────────────────────────────────────────────────────
 
-$messagesPath  = __DIR__ . '/data/messages.json';
-$benchmarkPath = __DIR__ . '/data/benchmark.json';
+$messagesPath  = __DIR__ . '/data/05_Inbound_Messages.json';
+$benchmarkPath = __DIR__ . '/data/06_Benchmark.json';
 $outputPath    = __DIR__ . '/data/batch_results.json';
 
 $messages  = json_decode(file_get_contents($messagesPath),  true)['messages'];
