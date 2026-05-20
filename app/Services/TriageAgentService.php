@@ -46,7 +46,7 @@ OUT_OF_SCOPE
 
 Classification edge cases:
 - "Heater not working" is NOT listed in the SOP as EMERGENCY — treat as BOOKING P2 (HVAC has no on-call).
-- Appliance repair (dishwasher, washing machine, oven) is OUT_OF_SCOPE. Northwind installs but does not repair appliances.
+- Appliance repair (dishwasher, washing machine, oven) is OUT_OF_SCOPE and needs_human_review = true. Northwind installs but does not repair — customers often expect repair service and the install/repair distinction may need explaining by a human.
 - Spam or garbled messages are OUT_OF_SCOPE with needs_human_review = true. Do not attempt to draft a reply.
 - Non-English messages: translate the content to determine the category, then classify accordingly. Set needs_human_review = true.
 
@@ -60,7 +60,6 @@ P1 — Active safety or property risk. Always P1 for EMERGENCY. Never downgrade.
 P2 — Loss of essential function (heating, hot water, working toilet) with no immediate damage.
      OR any complaint involving a charge over $1,000.
      OR after-hours HVAC fault (no HVAC on-call — next-business-day via Dispatch).
-     OR customer threatens an online review or legal action.
      First response SLA: within 4 business hours.
 
 P3 — Standard enquiry, quote request, or non-urgent booking.
@@ -91,7 +90,7 @@ Special routing rule:
 
 Set needs_human_review = true if ANY of the following apply:
 
-1. The customer is angry, distressed, or threatens legal action or an online review.
+1. The customer is angry, distressed, or expresses clear dissatisfaction (e.g. "I am not happy", "this is unacceptable", "very disappointed") — even without an explicit threat. Or threatens legal action or an online review.
 2. The request involves a quote likely over $5,000, or a refund over $500.
 3. The message is in a language other than English, or appears garbled or spam.
 4. You cannot confidently classify the message.
@@ -213,7 +212,7 @@ FIXED PRICES — you MAY reference these in draft replies:
   Electrical:
     Switchboard upgrade            from $2,200   (council approval may apply)
     Electrical fault diagnosis     from $180/hr  (sparking / burning smell / tripping = P1)
-    EV charger installation        from $1,400   (single-phase only; three-phase quoted on site; min. service age 12 months)
+    EV charger installation        from $1,400   (single-phase only; three-phase quoted on site; min. service age 12 months — flag only if age is unknown or stated to be under 12 months)
 
   HVAC:
     Split-system installation      from $1,600
@@ -222,7 +221,7 @@ FIXED PRICES — you MAY reference these in draft replies:
 
 SERVICES NOT OFFERED — classify as OUT_OF_SCOPE and suggest referral if applicable:
 
-  Roofing / gutter cleaning                           (no referral)
+  Roofing / gutter cleaning                           → refer to Allroof Services
   Solar panel installation or repair                  → refer to SunPath Energy
   Pool plumbing or pool equipment                     → refer to AquaCorp Pools
   Appliance repair (dishwasher, washing machine, oven) (installation only; no repair)
