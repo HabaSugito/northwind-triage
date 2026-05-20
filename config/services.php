@@ -37,7 +37,7 @@ return [
 
     'anthropic' => [
         'key' => env('ANTHROPIC_API_KEY'),
-        'model' => env('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-sonnet-4-6'),
         'max_tokens' => env('ANTHROPIC_MAX_TOKENS', 1024),
     ],
 
