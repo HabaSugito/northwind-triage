@@ -36,7 +36,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Northwind — Triage Agent</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Northwind — Triage Agent
+        </h1>
         <MessageForm onSubmit={handleSubmit} loading={loading} />
         {error && (
           <div className="rounded bg-red-50 border border-red-300 text-red-700 px-4 py-3 text-sm">

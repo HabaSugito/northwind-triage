@@ -10,7 +10,9 @@ const COLOURS = {
 export default function CategoryBadge({ category }) {
   const colour = COLOURS[category] ?? COLOURS.OUT_OF_SCOPE;
   return (
-    <span className={`border rounded px-2 py-0.5 text-xs font-semibold ${colour}`}>
+    <span
+      className={`border rounded px-2 py-0.5 text-xs font-semibold ${colour}`}
+    >
       {category}
     </span>
   );

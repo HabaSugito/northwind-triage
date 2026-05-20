@@ -12,7 +12,8 @@ class TriageController extends Controller
 {
     public function __construct(
         private readonly TriageAgentService $agent
-    ) {}
+    ) {
+    }
 
     public function triage(Request $request): JsonResponse
     {

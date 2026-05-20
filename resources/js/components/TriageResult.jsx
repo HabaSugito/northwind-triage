@@ -14,7 +14,8 @@ export default function TriageResult({ result }) {
         <CategoryBadge category={result.category} />
         <PriorityBadge priority={result.priority} />
         <span className="text-sm text-gray-600">
-          Route to: <span className="font-medium text-gray-900">{result.route_to}</span>
+          Route to:{' '}
+          <span className="font-medium text-gray-900">{result.route_to}</span>
         </span>
       </div>
 
@@ -24,7 +25,9 @@ export default function TriageResult({ result }) {
         </p>
         <div className="bg-gray-50 border border-gray-200 rounded px-4 py-3 text-sm text-gray-800 whitespace-pre-wrap">
           {result.draft_reply || (
-            <span className="text-gray-400 italic">No reply drafted (spam or garbled message)</span>
+            <span className="text-gray-400 italic">
+              No reply drafted (spam or garbled message)
+            </span>
           )}
         </div>
       </div>
