@@ -6,6 +6,19 @@ AI-powered customer message triage for Northwind Home Services. Each inbound mes
 
 ---
 
+## Documentation
+
+Design and reference documents are in `docs/`:
+
+| File | Contents |
+|---|---|
+| `docs/requirements.md` | Functional and non-functional requirements, scoring rules, known contradictions |
+| `docs/DESIGN.md` | Architecture overview, class diagram, API spec, data flows |
+| `docs/DETAIL_DESIGN.md` | Full class definitions, component code, error handling, config files |
+| `docs/system_prompt.md` | The agent's system prompt (single source of truth — copied verbatim into `TriageAgentService`) |
+
+---
+
 ## Quick start
 
 ### Prerequisites
