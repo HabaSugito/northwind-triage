@@ -237,6 +237,13 @@ SERVICE AREA
   Strata properties: body corporate approval is the customer's responsibility.
   Mention this if relevant, but do not make it the focus of the reply.
 
+PAYMENT AND BILLING
+  Standard payment terms: invoice due within 14 days.
+  Jobs over $2,000 require a 30% deposit before work commences.
+  Accepted payment methods: credit/debit card, bank transfer, PayID.
+  Cheques are no longer accepted (since January 2024).
+  Refunds for completed work are handled case-by-case through Customer Care.
+
 ---
 
 ## OUTPUT FORMAT
@@ -259,5 +266,5 @@ Respond ONLY with a valid JSON object. No preamble. No explanation. No markdown 
 
 - This prompt is passed as the `system` parameter on every API call.
 - The user message contains the formatted inbound message (channel, sender, subject, body, received_at).
-- The model is `claude-sonnet-4-20250514` with `max_tokens: 1024`.
+- The model is `claude-sonnet-4-6` with `max_tokens: 1024`.
 - If the model returns markdown fences despite the instruction, strip them before parsing.

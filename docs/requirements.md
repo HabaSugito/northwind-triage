@@ -58,8 +58,8 @@ northwind-triage/
 │   ├── vite.config.js
 │   └── .env
 ├── data/
-│   ├── messages.json                 # 20 inbound messages
-│   └── benchmark.json                # Gold-standard triage decisions
+│   ├── 05_Inbound_Messages.json      # 20 inbound messages
+│   └── 06_Benchmark.json             # Gold-standard triage decisions
 ├── scripts/
 │   └── batch_run.php                 # Batch runner and scorer
 └── README.md

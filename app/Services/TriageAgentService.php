@@ -241,6 +241,13 @@ SERVICE AREA
   Strata properties: body corporate approval is the customer's responsibility.
   Mention this if relevant, but do not make it the focus of the reply.
 
+PAYMENT AND BILLING
+  Standard payment terms: invoice due within 14 days.
+  Jobs over $2,000 require a 30% deposit before work commences.
+  Accepted payment methods: credit/debit card, bank transfer, PayID.
+  Cheques are no longer accepted (since January 2024).
+  Refunds for completed work are handled case-by-case through Customer Care.
+
 ---
 
 ## OUTPUT FORMAT
@@ -264,7 +271,7 @@ PROMPT;
     public function __construct()
     {
         $this->apiKey = config('services.anthropic.key');
-        $this->model = config('services.anthropic.model', 'claude-sonnet-4-20250514');
+        $this->model = config('services.anthropic.model', 'claude-sonnet-4-6');
         $this->maxTokens = (int) config('services.anthropic.max_tokens', 1024);
 
         if (empty($this->apiKey)) {

@@ -183,7 +183,7 @@ Route::get('/health',  [TriageController::class, 'health']);
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-sonnet-4-20250514
+ANTHROPIC_MODEL=claude-sonnet-4-6
 ANTHROPIC_MAX_TOKENS=1024
 ```
 

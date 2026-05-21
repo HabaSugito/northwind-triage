@@ -46,7 +46,7 @@ class TriageAgentService
     public function __construct()
     {
         $this->apiKey    = config('services.anthropic.key');
-        $this->model     = config('services.anthropic.model', 'claude-sonnet-4-20250514');
+        $this->model     = config('services.anthropic.model', 'claude-sonnet-4-6');
         $this->maxTokens = (int) config('services.anthropic.max_tokens', 1024);
 
         if (empty($this->apiKey)) {
@@ -182,7 +182,7 @@ Add to `config/services.php`:
 ```php
 'anthropic' => [
     'key'        => env('ANTHROPIC_API_KEY'),
-    'model'      => env('ANTHROPIC_MODEL',      'claude-sonnet-4-20250514'),
+    'model'      => env('ANTHROPIC_MODEL',      'claude-sonnet-4-6'),
     'max_tokens' => env('ANTHROPIC_MAX_TOKENS', 1024),
 ],
 ```
@@ -265,7 +265,7 @@ class TriageController extends Controller
 
 ### 2.4 Validation Error Format
 
-Laravel's default validation returns 422. Override in `app/Exceptions/Handler.php` to return 400:
+Laravel's default validation returns 422. Override in `bootstrap/app.php` (via `withExceptions()`) to return 400:
 
 ```php
 use Illuminate\Validation\ValidationException;
@@ -378,7 +378,7 @@ APP_DEBUG=true
 APP_URL=http://localhost:8000
 
 ANTHROPIC_API_KEY=
-ANTHROPIC_MODEL=claude-sonnet-4-20250514
+ANTHROPIC_MODEL=claude-sonnet-4-6
 ANTHROPIC_MAX_TOKENS=1024
 ```
 
