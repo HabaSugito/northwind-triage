@@ -174,19 +174,23 @@ The classification as OUT_OF_SCOPE is correct (Northwind installs but does not r
 
 The flag miss was a prompt gap. The SOP is explicit that an angry or distressed customer triggers `needs_human_review = true` (condition 1). The customer wrote "We are not happy" — clear dissatisfaction the agent failed to detect. **Prompt fix applied:** made flag condition 1 more explicit about dissatisfaction phrases.
 
-For priority, the final agent returns P2 and matches the benchmark — but its stated reasoning is wrong: it cites "customer expresses clear dissatisfaction" as the P2 trigger. The SOP's P2 conditions are exhaustive (essential function loss, charge over $1,000, after-hours HVAC fault) and none of them apply to a $280 conduct complaint. The agent reached the correct outcome via a rule that exists only for `needs_human_review`, not for priority. This is a model generalisation beyond the explicit prompt — the right answer arrived by the wrong path. **No prompt change applied for priority.** The SOP genuinely does not support P2 here; the benchmark's call is defensible on reputational-risk grounds that the SOP does not articulate.
+For priority, the final agent returns P2 and matches the benchmark — but its stated reasoning is wrong: it cites "customer expresses clear dissatisfaction" as the P2 trigger. The SOP's P2 conditions are exhaustive (essential function loss, charge over $1,000, after-hours HVAC fault) and none of them apply to a $280 conduct complaint. The agent reached the correct benchmark answer via a rule that exists only for `needs_human_review`, not for priority — conflating the flag trigger with the priority trigger. This is a model generalisation beyond the explicit prompt. **No prompt change applied for priority.** The benchmark's own notes acknowledge that P3 is also defensible. Strict SOP reading: P3, `Customer Care`.
 
 ### MSG-004 — $150 billing dispute: benchmark, agent, and SOP all diverge
 
 **Benchmark:** P2, `Customer Care + Accounts` &nbsp; **Agent:** P2, `Customer Care + Accounts` &nbsp; **SOP-grounded:** P3, `Customer Care`
 
-The agent matches the benchmark, but both are questionable against the SOP. Priority: the charge involved is $280, well below the $1,000 threshold for P2 — the agent's own reasoning contradicts itself, stating "the disputed amount ($150) is under $1,000" while still assigning P2. Route: the disputed charge is $150, below the $500 dual-routing threshold; the agent applied dual routing by reading "billing dispute over $500" as the invoice total ($720) rather than the contested portion. That reading is arguable, but the SOP does not say "invoice total." No prompt fix applied — the routing rule in the prompt is correct by the SOP; the agent is misapplying it.
+The agent matches the benchmark, but both are questionable against the SOP.
+
+**Priority:** The SOP's P2 condition for complaints is "a charge over $1,000." The contested amount is $150, well below that threshold. The benchmark assigns P2 citing the customer's online-review threat — but the SOP classifies that threat as a `needs_human_review` trigger (condition 1), not a priority escalation trigger. These are separate rules. The agent's own reasoning contradicts itself: it states "the disputed amount ($150) is under $1,000" while still assigning P2.
+
+**Route:** The dual-routing rule activates for "a billing dispute over $500." The contested portion is $150, not the invoice total of $720. The SOP says "dispute," not "invoice total." The agent over-routes by reading the $720 invoice as the dispute amount. No prompt fix applied — the routing rule in the prompt is correct; the agent misapplies it. Strict SOP reading: P3, `Customer Care`.
 
 ### MSG-019 — $720 refund: P2 assigned without SOP basis
 
 **Benchmark:** P2, `Accounts` &nbsp; **Agent:** P2, `Accounts` &nbsp; **SOP-grounded:** P3, `Accounts`
 
-The agent matches the benchmark, but both assign P2 for a BILLING refund request of $720. The SOP's P2 conditions are: loss of essential function, complaint involving a charge over $1,000, or after-hours HVAC fault. A refund request does not meet any of these. The agent's reasoning cites "refund amount exceeds the $500 threshold" — which is the `needs_human_review` trigger (SOP rule 2), not a P2 condition. The flag is correctly set to true; the priority should be P3 by the SOP. The benchmark's P2 call is pragmatically defensible (a $720 outstanding refund warrants prompt attention) but is not grounded in the SOP as written.
+The agent matches the benchmark, but both assign P2 for a BILLING refund request of $720. The SOP's $500 threshold is a `needs_human_review` trigger (condition 2), not a P2 condition. The SOP's P2 conditions — loss of essential function, complaint involving a charge over $1,000, after-hours HVAC fault — none of which apply to a refund request. The agent's reasoning cites "refund amount exceeds the $500 threshold" as the P2 basis, conflating the flag trigger with the priority trigger. The flag is correctly set to true; the priority should be P3 by the SOP. The benchmark's own notes acknowledge that P3 is also defensible. Strict SOP reading: P3, `Accounts`.
 
 ### MSG-001 — Draft reply quotes a fixed price (not scored)
 
