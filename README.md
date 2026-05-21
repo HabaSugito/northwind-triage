@@ -124,7 +124,9 @@ The triage agent is a single Anthropic API call per message with no tool use, no
 
 ## Accuracy
 
-Scored against `data/06_Benchmark.json` (20 messages):
+Two accuracy figures are reported: benchmark alignment and SOP-grounded accuracy. They differ because the benchmark itself assigns P2 in three cases where the SOP's P2 conditions are not met.
+
+### Benchmark alignment
 
 | Field | Accuracy |
 |---|---|
@@ -134,7 +136,21 @@ Scored against `data/06_Benchmark.json` (20 messages):
 | needs_human_review | 100% (20/20) |
 | **Strict (all 4 correct)** | **100% (20/20)** |
 
-The three initial failures and the reasoning behind each prompt correction are analysed below.
+### SOP-grounded accuracy
+
+The SOP defines three P2 conditions exhaustively: loss of essential function, complaint involving a charge over $1,000, or an after-hours HVAC fault. In three cases (MSG-004, MSG-017, MSG-019) the benchmark assigns P2 for situations that meet none of these — a conduct complaint for $280, a billing dispute of $150/$720, and a $720 refund request. The agent matched the benchmark on all three, but the underlying priority calls are not supportable by the SOP.
+
+| Field | Accuracy |
+|---|---|
+| Category | 100% (20/20) |
+| Priority | 85% (17/20) |
+| Route | 95% (19/20) |
+| needs_human_review | 100% (20/20) |
+| **Strict (all 4 correct)** | **85% (17/20)** |
+
+The three failures share a common failure mode: in all cases the agent cites the `needs_human_review` trigger (customer dissatisfaction, refund over $500) as justification for P2 — conflating the flag threshold with the priority threshold. These are separate SOP rules. The prompt states them clearly, but the model generalises across them in borderline cases.
+
+The three initial prompt corrections (MSG-005 flag over-triggered, MSG-007 flag not triggered, MSG-017 flag not triggered) and the benchmark analysis below focus on cases where the agent's output diverged from the benchmark.
 
 ---
 
@@ -160,11 +176,17 @@ The flag miss was a prompt gap. The SOP is explicit that an angry or distressed 
 
 For priority, the final agent returns P2 and matches the benchmark — but its stated reasoning is wrong: it cites "customer expresses clear dissatisfaction" as the P2 trigger. The SOP's P2 conditions are exhaustive (essential function loss, charge over $1,000, after-hours HVAC fault) and none of them apply to a $280 conduct complaint. The agent reached the correct outcome via a rule that exists only for `needs_human_review`, not for priority. This is a model generalisation beyond the explicit prompt — the right answer arrived by the wrong path. **No prompt change applied for priority.** The SOP genuinely does not support P2 here; the benchmark's call is defensible on reputational-risk grounds that the SOP does not articulate.
 
-### MSG-004 — $150 billing dispute, two interpretations of the $500 threshold
+### MSG-004 — $150 billing dispute: benchmark, agent, and SOP all diverge
 
-**Agent:** `Customer Care + Accounts` &nbsp; **Benchmark:** `Customer Care + Accounts` &nbsp; **Score:** 1.0
+**Benchmark:** P2, `Customer Care + Accounts` &nbsp; **Agent:** P2, `Customer Care + Accounts` &nbsp; **SOP-grounded:** P3, `Customer Care`
 
-The agent matched the benchmark, but via a different reading of the SOP than expected. The disputed amount is $150 (under the $500 threshold), yet the agent applied dual routing because the total invoice value is $720 — reasoning that the "billing dispute over $500" rule refers to the invoice total, not the contested portion. That reading is defensible; the SOP does not specify which figure the $500 threshold applies to. The benchmark routes to both teams for the same case, which conflicts with a strict reading of "disputed amount only." We note this as a genuine ambiguity in the SOP rather than a benchmark error or a prompt fix.
+The agent matches the benchmark, but both are questionable against the SOP. Priority: the charge involved is $280, well below the $1,000 threshold for P2 — the agent's own reasoning contradicts itself, stating "the disputed amount ($150) is under $1,000" while still assigning P2. Route: the disputed charge is $150, below the $500 dual-routing threshold; the agent applied dual routing by reading "billing dispute over $500" as the invoice total ($720) rather than the contested portion. That reading is arguable, but the SOP does not say "invoice total." No prompt fix applied — the routing rule in the prompt is correct by the SOP; the agent is misapplying it.
+
+### MSG-019 — $720 refund: P2 assigned without SOP basis
+
+**Benchmark:** P2, `Accounts` &nbsp; **Agent:** P2, `Accounts` &nbsp; **SOP-grounded:** P3, `Accounts`
+
+The agent matches the benchmark, but both assign P2 for a BILLING refund request of $720. The SOP's P2 conditions are: loss of essential function, complaint involving a charge over $1,000, or after-hours HVAC fault. A refund request does not meet any of these. The agent's reasoning cites "refund amount exceeds the $500 threshold" — which is the `needs_human_review` trigger (SOP rule 2), not a P2 condition. The flag is correctly set to true; the priority should be P3 by the SOP. The benchmark's P2 call is pragmatically defensible (a $720 outstanding refund warrants prompt attention) but is not grounded in the SOP as written.
 
 ### MSG-001 — Draft reply quotes a fixed price (not scored)
 
