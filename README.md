@@ -152,19 +152,19 @@ The catalogue lists EV charger installation with a 12-month minimum service age 
 
 The classification as OUT_OF_SCOPE is correct (Northwind installs but does not repair appliances). However, customers routinely expect a trades company to repair appliances — the install/repair distinction is not obvious and warrants a human-written explanation. SOP condition 6 ("borderline outside catalogue") applies here. **Prompt fix applied:** explicitly mark appliance repair OUT_OF_SCOPE cases as `needs_human_review = true`.
 
-### MSG-017 — Conduct complaint, priority and flag both off
+### MSG-017 — Conduct complaint, flag miss fixed; priority right answer, wrong reason
 
-**Agent:** P3, `needs_human_review = false` &nbsp; **Benchmark:** P2, `true`
+**Initial agent:** P3, `needs_human_review = false` &nbsp; **Benchmark:** P2, `true` &nbsp; **Final agent:** P2, `true`
 
-The flag miss is a prompt gap. The SOP is explicit that an angry or distressed customer triggers `needs_human_review = true` (condition 1). The customer wrote "We are not happy" — clear dissatisfaction the agent failed to detect. **Prompt fix applied:** made flag condition 1 more explicit about dissatisfaction phrases.
+The flag miss was a prompt gap. The SOP is explicit that an angry or distressed customer triggers `needs_human_review = true` (condition 1). The customer wrote "We are not happy" — clear dissatisfaction the agent failed to detect. **Prompt fix applied:** made flag condition 1 more explicit about dissatisfaction phrases.
 
-The priority disagreement is a genuine SOP ambiguity. By the letter of the SOP, P2 requires either essential function loss or a charge over $1,000. The $280 conduct complaint meets neither criterion; P3 is the correct strict reading. The benchmark's P2 call is defensible — a clearly upset customer carries reputational risk that P2's 4-hour SLA would address — but the SOP doesn't state this. We agree with the benchmark's intent but consider this an SOP gap rather than a prompt error. **No prompt change applied for priority** — adding an implicit rule that "upset customer = P2" would go beyond what the SOP actually says.
+For priority, the final agent returns P2 and matches the benchmark — but its stated reasoning is wrong: it cites "customer expresses clear dissatisfaction" as the P2 trigger. The SOP's P2 conditions are exhaustive (essential function loss, charge over $1,000, after-hours HVAC fault) and none of them apply to a $280 conduct complaint. The agent reached the correct outcome via a rule that exists only for `needs_human_review`, not for priority. This is a model generalisation beyond the explicit prompt — the right answer arrived by the wrong path. **No prompt change applied for priority.** The SOP genuinely does not support P2 here; the benchmark's call is defensible on reputational-risk grounds that the SOP does not articulate.
 
-### MSG-004 — $150 billing dispute routed to "Customer Care + Accounts"
+### MSG-004 — $150 billing dispute, two interpretations of the $500 threshold
 
-**Agent:** matched benchmark &nbsp; **SOP rule:** dual routing only for disputes over $500
+**Agent:** `Customer Care + Accounts` &nbsp; **Benchmark:** `Customer Care + Accounts` &nbsp; **Score:** 1.0
 
-The benchmark routes a $150 billing dispute to both teams despite the SOP's explicit $500 threshold. The agent matched the benchmark but the SOP rule is unambiguous. We consider this a benchmark inconsistency. No prompt change; the routing rule in the prompt is correct by the SOP.
+The agent matched the benchmark, but via a different reading of the SOP than expected. The disputed amount is $150 (under the $500 threshold), yet the agent applied dual routing because the total invoice value is $720 — reasoning that the "billing dispute over $500" rule refers to the invoice total, not the contested portion. That reading is defensible; the SOP does not specify which figure the $500 threshold applies to. The benchmark routes to both teams for the same case, which conflicts with a strict reading of "disputed amount only." We note this as a genuine ambiguity in the SOP rather than a benchmark error or a prompt fix.
 
 ### MSG-001 — Draft reply quotes a fixed price (not scored)
 
